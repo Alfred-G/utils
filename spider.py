@@ -48,7 +48,7 @@ class Spider():
     """
 
     def __init__(self, **kwargs):
-        header = self.get_header(kwargs.get('header', {}))
+        header = kwargs.get('header', HEADER)
         handler = self.get_handler(**kwargs.get('handler', {}))
         self.opener = self.get_opener(header, handler)
         socket.setdefaulttimeout(kwargs.get('timeout', 3))
@@ -75,19 +75,6 @@ class Spider():
         if kwargs.get('proxy', ''):
             handler.append(self.proxy_handler(kwargs.get('proxy', '')))
         return handler
-
-    @staticmethod
-    def get_header(header):
-        """
-        1
-        """
-
-        if not header:
-            header = {
-                'User-Agent':'Mozilla/5.0 (Windows; U; Windows NT 6.1; '\
-                    'en-US; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6',
-            }
-        return header.items()
 
     @staticmethod
     def cookie_handler():
@@ -155,3 +142,9 @@ class Spider():
                 except:
                     print (img_url+' download fail')
                     print(traceback.print_exc())
+
+    @staticmethod
+    def extract(data, idx=0):
+        if data and len(data) > idx:
+            return data[idx]
+        return ''

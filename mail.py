@@ -17,10 +17,14 @@ class Mail():
     1
     """
 
-    def __init__(self, user, password, host):
+    def __init__(self, user, password, host , nick_name=None):
         self.user = user
         self.password = password
         self.host = host
+        if nick_name:
+            self.nick_name = nick_name
+        else:
+            self.nick_name = user
         self.server = smtplib.SMTP(host, timeout=30)
 
     def send(self, to, title, txt, file_path):

@@ -21,32 +21,34 @@ TBL = {
 class Tag():
     """
     1
-    """    
+    """
+    
+    def __init__(item):
+        self.item = item
 
-    @staticmethod
-    def create_tbl(item):
+    def create_tbl(self):
         """
         1
         """
         
         stmts = [
             'create table tag (' \
-                'id int(11) primary key,' \
+                'id int(11) primary key auto_increment,' \
                 'name varchar(32)' \
             ');',
             'create table {item}_tag (' \
-                'id int(11) primary key, ' \
+                'id int(11) primary key auto_increment, ' \
                 '{item}_id int(11),' \
                 'tag_id int(11)' \
-            ');'.format(item=item),
+            ');'.format(item=self.item),
             'create table tag_parent (' \
-                'id int(11) primary key, ' \
+                'id int(11) primary key auto_increment, ' \
                 'tag_id int(11), ' \
                 'parent_id int(11) ' \
             ');'
         ]
         return stmts
-    
+
     def interpret(self, stmt, sub_stmts):
         """
         1
@@ -138,3 +140,29 @@ class Tag():
             return data
         else:
             return json.loads(data)
+
+    def modify(self, item, tags):
+        tags = tags.splite(';')
+        self.execute_many('insert ignore into tag (name) values(?)', tags)
+        tags = self.execute(
+            'select id from tag where name in (%s)' % ','.join(tags)
+        )
+        tags = [i[0] for i in tags]
+
+        self.execute_many(
+            'insert ignore into {item}_tag ({item}_id, tag_id) '\
+                'values({item_id},?)'\
+                .format(item=self.item, item_id=item),
+            tags
+        )
+        item = self.execute(
+            'select id,tag_id from {item}_tag where '\
+                'item_id={item_id}'.format(item=self.item, item_id=item)
+        )
+        delete = []
+        for i in item:
+            if i[1] not in tags:
+                delete.append(i[0])
+        self.execute('delete from %s_tag where id in (%s)'\
+                     % (self.item, ','.join(delete))
+        )

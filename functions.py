@@ -88,3 +88,13 @@ def merge(file_path, num=5, cp=''):
     if cp:
         import shutil
         shutil.copy('%s.csv', cp)
+
+def yield_list(data, num=20):
+    pool = []
+    for i in data:
+        pool.append(i)
+        if pool and len(pool) % num == 0:
+            yield pool
+            pool=[]
+    if pool:
+        yield pool
