@@ -15,6 +15,7 @@ import traceback
 
 from lxml import etree
 
+from utils.functions import make_a_try
 
 HEADER = {
     'User-Agent':'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US;'\
@@ -32,23 +33,13 @@ def xpath(self, state):
     return self.etree.xpath(state)
 
 
-def make_a_try(func):
-    def _make_a_try(self, url, **kwargs):
-        try:
-            return func(self, url, **kwargs)
-        except:
-            traceback.print_exc()
-            return
-    return _make_a_try
-    
-    
 class Spider():
     """
     1
     """
 
     def __init__(self, **kwargs):
-        header = kwargs.get('header', HEADER)
+        header = kwargs.get('header', {})
         handler = self.get_handler(**kwargs.get('handler', {}))
         self.opener = self.get_opener(header, handler)
         socket.setdefaulttimeout(kwargs.get('timeout', 3))

@@ -13,7 +13,7 @@ from sqlalchemy import create_engine
 from utils.functions import yield_list
 
 
-class DBconnector():
+class DBcon():
     """
     1
     """
@@ -27,6 +27,9 @@ class DBconnector():
             db_info['connection']['database'] = database
         self.db_info = db_info
 
+    """
+    cnx
+    """
     def sqlite_cnx(self):
         """
         1
@@ -67,9 +70,9 @@ class DBconnector():
         cnx = getattr(self, '%s_cnx' % self.db_info['type'])()
         cursor = cnx.cursor()
         cursor.execute(stmt)
-        cnx.commit()
         for i in cursor:
             yield i
+        cnx.commit()
         cursor.close()
         cnx.close()
 
@@ -128,3 +131,11 @@ class DBconnector():
         return self.execute(
             'select {pk} from {tbl}'.format(pk=pk, tbl=tbl)
         )
+
+    @staticmethod
+    def mongo_cnx(user, password, host, port, database):
+        from pymongo import MongoClient
+        client = MongoClient(host, int(port))
+        database = client.car
+        database.authenticate(user, password)
+        return database

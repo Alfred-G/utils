@@ -23,7 +23,7 @@ class Tag():
     1
     """
     
-    def __init__(item):
+    def __init__(self, item):
         self.item = item
 
     def create_tbl(self):

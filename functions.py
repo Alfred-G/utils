@@ -98,3 +98,13 @@ def yield_list(data, num=20):
             pool=[]
     if pool:
         yield pool
+
+def make_a_try(func):
+    import traceback
+    def _make_a_try(self, url, **kwargs):
+        try:
+            return func(self, url, **kwargs)
+        except:
+            traceback.print_exc()
+            return
+    return _make_a_try
