@@ -70,11 +70,11 @@ class DBcon():
         cnx = getattr(self, '%s_cnx' % self.db_info['type'])()
         cursor = cnx.cursor()
         cursor.execute(stmt)
-        for i in cursor:
-            yield i
+        rst = [i for i in cursor]
         cnx.commit()
         cursor.close()
         cnx.close()
+        return rst
 
     def execute_many(self, stmt, data, num=20):
         """
@@ -89,6 +89,7 @@ class DBcon():
                 cursor.executemany(stmt, i)
                 cnx.commit()
             except:
+                print(stmt)
                 traceback.print_exc()
 
         cursor.close()
@@ -98,16 +99,17 @@ class DBcon():
         """
         1
         """
-
-        flds, pk = self.db_info['tbls'][tbl]
-        flds = kwargs.get('flds', flds)
-        num = kwargs.get('num', 20)
-
-        stmt = 'insert or ignore into {tbl} values (:{pk})'\
-            .format(tbl=tbl, pk=pk),
-
-        self.execute_many(stmt, data, num)
-        self.update(tbl, flds, data, num)
+        
+        try:
+            flds, pk = self.db_info['tbls'][tbl]
+            flds = kwargs.get('flds', flds)
+            num = kwargs.get('num', 20)
+            stmt = 'insert or ignore into {tbl}({pk}) values (:{pk})'\
+                .format(tbl=tbl, pk=pk)
+            self.execute_many(stmt, data, num)
+            self.update(tbl, flds, data, num)
+        except:
+            traceback.print_exc()
 
     def update(self, tbl, flds, data, num=20):
         """
@@ -115,7 +117,7 @@ class DBcon():
         """
 
         pk = self.db_info['tbls'][tbl][1]
-        stmt = 'update {tbl} set {flds} where {pk}=:{pk}'.format(
+        stmt = 'update {tbl} set {flds} where {pk}=:_pk'.format(
             tbl=tbl,
             flds=','.join(['%s=:%s' % (i, i) for i in flds]),
             pk=pk
