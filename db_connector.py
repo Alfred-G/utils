@@ -23,7 +23,7 @@ class DBcon():
         1
         """
 
-        if database:
+        if database and db_info['type'] != 'mongo':
             db_info['connection']['database'] = database
         self.db_info = db_info
 

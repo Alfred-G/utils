@@ -48,25 +48,29 @@ class Tag():
             ');'
         ]
         return stmts
+    
+    ########################################################
+    def interpret(self,stmt):
+        return self.parse_result(*self.parse_parentheses(stmt,[]))
 
-    def interpret(self, stmt, sub_stmts):
+    def parse_result(self, stmt, sub_stmts):
         """
         1
         """
     
-        fst, opr, last = self.operator(stmt)
+        fst, opr, last = self.parse_operator(stmt)
         if max([opr in fst for opr in TOKEN['OPR']]) == 1:
-            fst = self.get_tags(fst, sub_stmts)
+            fst = self.parse_result(fst, sub_stmts)
         else:
             fst = self._eval(fst)
             if isinstance(fst, list):
                 fst = self.get_tags(sub_stmts[fst[0] - 1], sub_stmts)
             else:
                 fst = set([fst])
-    
+
         last = self._eval(last)
         if isinstance(last, list):
-            last = self.get_tags(sub_stmts[last[0] - 1], sub_stmts)
+            last = self.parse_result(sub_stmts[last[0] - 1], sub_stmts)
         else:
             last = set([last])
     
@@ -78,7 +82,7 @@ class Tag():
             return self._diff(fst, last)
         
     @staticmethod
-    def operator(stmt):
+    def parse_operator(stmt):
         """
         1
         """
@@ -89,7 +93,7 @@ class Tag():
         pos = max(pos)
         return (stmt[: pos], stmt[pos], stmt[pos + 1: ])
     
-    def parentheses(self, stmt, sub_stmts=[]):
+    def parse_parentheses(self, stmt, sub_stmts):
         """
         1
         """
@@ -99,9 +103,9 @@ class Tag():
             start = stmt.rfind('(', 0, end)
             sub_stmts.append(stmt[start + 1: end])
             stmt = ''.join(
-                stmt[: start], '[%s]' % len(sub_stmts), stmt[end + 1: ]
+                [stmt[: start], '[%s]' % len(sub_stmts), stmt[end + 1: ]]
             )
-            return self.parentheses(stmt, sub_stmts)
+            return self.parse_parentheses(stmt, sub_stmts)
         else:
             return (stmt, sub_stmts)
     
@@ -141,6 +145,7 @@ class Tag():
         else:
             return json.loads(data)
 
+############################################################
     def modify(self, item, tags):
         tags = tags.splite(';')
         self.execute_many('insert ignore into tag (name) values(?)', tags)
@@ -166,3 +171,23 @@ class Tag():
         self.execute('delete from %s_tag where id in (%s)'\
                      % (self.item, ','.join(delete))
         )
+        
+    def tag_to_item(self, tag):
+        stmt = \
+            'SELECT item_id '\
+            '  FROM item_tag '\
+            ' WHERE item_id=? '\
+            .format(item=self.item)
+        return [i[0] for i in self.db.execute(stmt)]
+    
+    def item_to_tag(self, item_id):
+        stmt = \
+            'SELECT name '\
+            '  FROM tag '\
+            '  JOIN item_tag '\
+            '    ON tag.id=item_tag.tag_id '\
+            '  JOIN item '\
+            '    ON item_tag.item_id = item_id '\
+            ' WHERE item_id=? '\
+            .format(item=self.item)
+        return [i[0] for i in self.db.execute(stmt)]
