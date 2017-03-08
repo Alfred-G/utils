@@ -62,6 +62,24 @@ class DBcon():
         engine = create_engine(stmt.format(**info))
         return engine.connect()
 
+    def select(self, stmt):
+        try:
+            cnx = getattr(self, '%s_cnx' % self.db_info['type'])()
+            cursor = cnx.cursor()
+            try:
+                cursor.execute(stmt)
+                rst = [i for i in cursor]
+                cursor.close()
+                cnx.close()
+                return rst
+            except:
+                traceback.print_exc()
+                print(stmt)
+        except:
+            traceback.print_exc()
+            cursor.close()
+            cnx.close()
+
     def execute(self, stmt):
         """
         1
@@ -69,12 +87,14 @@ class DBcon():
 
         cnx = getattr(self, '%s_cnx' % self.db_info['type'])()
         cursor = cnx.cursor()
-        cursor.execute(stmt)
-        rst = [i for i in cursor]
-        cnx.commit()
+        try:
+            cursor.execute(stmt)
+            cnx.commit()
+        except:
+            traceback.print_exc()
+            print(stmt)
         cursor.close()
         cnx.close()
-        return rst
 
     def execute_many(self, stmt, data, num=20):
         """

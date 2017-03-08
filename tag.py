@@ -175,19 +175,19 @@ class Tag():
     def tag_to_item(self, tag):
         stmt = \
             'SELECT item_id '\
-            '  FROM item_tag '\
-            ' WHERE item_id=? '\
-            .format(item=self.item)
-        return [i[0] for i in self.db.execute(stmt)]
+            '  FROM {item}_tag '\
+            ' WHERE tag_id={tag} '\
+            .format(item=self.item, tag=tag)
+        return stmt
     
     def item_to_tag(self, item_id):
         stmt = \
             'SELECT name '\
             '  FROM tag '\
-            '  JOIN item_tag '\
-            '    ON tag.id=item_tag.tag_id '\
-            '  JOIN item '\
-            '    ON item_tag.item_id = item_id '\
-            ' WHERE item_id=? '\
-            .format(item=self.item)
-        return [i[0] for i in self.db.execute(stmt)]
+            '  JOIN {item}_tag '\
+            '    ON tag.id={item}_tag.tag_id '\
+            '  JOIN {item} '\
+            '    ON {item}_tag.{item}_id = {item}.isbn '\
+            ' WHERE {item}_id={item_id} '\
+            .format(item=self.item, item_id=item_id)
+        return stmt
