@@ -32,6 +32,12 @@ def xpath(self, state):
 
     return self.etree.xpath(state)
 
+def extract(data, idx=0):
+    if data and len(data) > idx:
+        return data[idx]
+    return ''
+
+
 
 class Spider():
     """
@@ -51,7 +57,7 @@ class Spider():
         """
 
         opener = urllib.request.build_opener(*handler)
-        opener.addheaders = header
+        opener.addheaders = header.items()
         urllib.request.install_opener(opener)
         return opener
 
@@ -118,24 +124,23 @@ class Spider():
         
         for img_url in img_urls:
             img_url = img_url + suffix
-            file_name = os.path.join(img_path, prefix + os.path.basename(img_url))
-            if not os.path.isfile(file_name):
-                try:
-                    img = self.opener.open(img_url)
-                    data = img.read()
-                    fobj = open(file_name,'wb')
-                    fobj.write(data)
-                    fobj.close()
-                    if sleep:
-                        time.sleep(sleep)
-                except socket.timeout:
-                    print (img_url+' time out')
-                except:
-                    print (img_url+' download fail')
-                    print(traceback.print_exc())
-
-    @staticmethod
-    def extract(data, idx=0):
-        if data and len(data) > idx:
-            return data[idx]
-        return ''
+            img_name = prefix + os.path.basename(img_url)
+            self.get_img(img_path, img_url, img_name, sleep=sleep)
+            
+    def get_img(self, img_path, img_url, img_name, **kwargs):
+        sleep = kwargs.get('sleep','')
+        img_name = os.path.join(img_path, img_name)
+        if not os.path.isfile(img_name):
+            try:
+                img = self.opener.open(img_url)
+                data = img.read()
+                fobj = open(img_name,'wb')
+                fobj.write(data)
+                fobj.close()
+                if sleep:
+                    time.sleep(sleep)
+            except socket.timeout:
+                print (img_url+' time out')
+            except:
+                print (img_url+' download fail')
+                print(traceback.print_exc())

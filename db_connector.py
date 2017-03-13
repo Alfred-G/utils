@@ -62,24 +62,6 @@ class DBcon():
         engine = create_engine(stmt.format(**info))
         return engine.connect()
 
-    def select(self, stmt):
-        try:
-            cnx = getattr(self, '%s_cnx' % self.db_info['type'])()
-            cursor = cnx.cursor()
-            try:
-                cursor.execute(stmt)
-                rst = [i for i in cursor]
-                cursor.close()
-                cnx.close()
-                return rst
-            except:
-                traceback.print_exc()
-                print(stmt)
-        except:
-            traceback.print_exc()
-            cursor.close()
-            cnx.close()
-
     def execute(self, stmt):
         """
         1
@@ -88,29 +70,31 @@ class DBcon():
         cnx = getattr(self, '%s_cnx' % self.db_info['type'])()
         cursor = cnx.cursor()
         try:
-            cursor.execute(stmt)
+            for i in cursor.execute(stmt):
+                yield i
             cnx.commit()
         except:
             traceback.print_exc()
             print(stmt)
-        cursor.close()
-        cnx.close()
+        finally:
+            cursor.close()
+            cnx.close()
 
     def execute_many(self, stmt, data, num=20):
         """
         1
         """
 
-        cnx = getattr(self, '%s_cnx' % self.db_info['type'])()
-        cursor = cnx.cursor()
+        try:
+            cnx = getattr(self, '%s_cnx' % self.db_info['type'])()
+            cursor = cnx.cursor()
 
-        for i in yield_list(data, num):
-            try:
-                cursor.executemany(stmt, i)
-                cnx.commit()
-            except:
-                print(stmt)
-                traceback.print_exc()
+            cursor.executemany(stmt, data)
+            cnx.commit()
+        except:
+            traceback.print_exc()
+            print('STMT: %s' % stmt)
+            print(data[0])
 
         cursor.close()
         cnx.close()
@@ -122,27 +106,56 @@ class DBcon():
         
         try:
             flds, pk = self.db_info['tbls'][tbl]
+            flds = [i[0] for i in flds]
             flds = kwargs.get('flds', flds)
             num = kwargs.get('num', 20)
+            
             stmt = 'insert or ignore into {tbl}({pk}) values (:{pk})'\
                 .format(tbl=tbl, pk=pk)
-            self.execute_many(stmt, data, num)
-            self.update(tbl, flds, data, num)
+
+            for i in yield_list(data, num):
+                if not kwargs.get('test', False):
+                    self.execute_many(stmt, i, num)
+                    self.update(tbl, flds, i, num)
+                else:
+                    print(stmt)
+                    print(i[0])
+                    break
         except:
             traceback.print_exc()
+            print('STMT: %s' % stmt)
+            print(data[0])
 
-    def update(self, tbl, flds, data, num=20):
+    def update(self, tbl, flds, data, **kwargs):
         """
         1
         """
-
-        pk = self.db_info['tbls'][tbl][1]
-        stmt = 'update {tbl} set {flds} where {pk}=:_pk'.format(
-            tbl=tbl,
-            flds=','.join(['%s=:%s' % (i, i) for i in flds]),
-            pk=pk
-        )
-        self.execute_many(stmt, data, num)
+        try:
+            pk = self.db_info['tbls'][tbl][1]
+            num = kwargs.get('num', 20)
+            if kwargs.get('pk', False):
+                stmt = 'update {tbl} set {flds} where {pk}=:_pk'.format(
+                    tbl = tbl,
+                    flds=','.join(['%s=:%s' % (i, i) for i in flds]),
+                    pk=pk
+                )
+            else:
+                stmt = 'update {tbl} set {flds} where {pk}=:{pk}'.format(
+                    tbl = tbl,
+                    flds=','.join(['%s=:%s' % (i, i) for i in flds]),
+                    pk=pk
+                )
+            for i in yield_list(data, num):
+                if not kwargs.get('test', False):
+                    self.execute_many(stmt, i, num)
+                else:
+                    print(stmt)
+                    print(i[0])
+                    break
+        except:
+            traceback.print_exc()
+            print('STMT: %s' % stmt)
+            print(data[0])
 
     def get_pk(self, tbl):
         """
