@@ -16,11 +16,12 @@ class Ftp(FTP):
 
     def __init__(self, server, oschar):
         super(Ftp, self).__init__()
+        #self.server=server
         self.set_debuglevel(2)
         self.connect(server)
         self.oschar = oschar
         self.bufsize = 10240
-
+        
     def download(self, filename):
         """
         1
