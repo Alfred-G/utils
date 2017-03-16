@@ -61,7 +61,25 @@ class DBcon():
             '/{database}'
         engine = create_engine(stmt.format(**info))
         return engine.connect()
-
+    
+    def select(self, stmt):
+        logger = Logger('DBcon')
+        cnx = getattr(self, '%s_cnx' % self.db_info['type'])()
+        cursor = cnx.cursor()
+        try:
+            cursor.execute(stmt)
+            for i in cursor:
+                yield i
+            cnx.commit()
+        except:
+            logger.error(
+                '<unknown> {err}\nstmt: {stmt}'\
+                .format(err=traceback.print_exc(), stmt=stmt)
+            )
+        finally:
+            cursor.close()
+            cnx.close()
+            
     def execute(self, stmt):
         """
         1
@@ -72,8 +90,6 @@ class DBcon():
         cursor = cnx.cursor()
         try:
             cursor.execute(stmt)
-            for i in cursor:
-                yield i
             cnx.commit()
         except:
             logger.error(

@@ -13,7 +13,8 @@ class Logger(logging.Logger):
         self.setLevel(logging.DEBUG)
         hdr = logging.StreamHandler()
         formatter = logging.Formatter(
-            '[%(asctime)s] %(name)s: %(levelname)s: %(message)s'
+            '[%(asctime)s] %(name)s: %(funcName)s: %(levelname)s: '\
+            '%(message)s'
         )
         hdr.setFormatter(formatter)
         self.addHandler(hdr)
